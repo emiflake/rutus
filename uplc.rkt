@@ -101,13 +101,11 @@
       [(version/e version) :: binary]
       [(term/e body) :: binary])]))
 
-
 (define/contract (uplc:encode p)
   (-> uplc:program? bytes?)
   (cbor-bytes
    (bit-string->bytes
     (flat-pad (program/e p)))))
-
 
 (require rackunit)
 

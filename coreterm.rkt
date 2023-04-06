@@ -12,8 +12,6 @@
 ;;    - letc* for introducing let bindings
 ;;    - appc for application
 ;;
-
-
 (require "rawterm.rkt")
 
 (define (intro-abs f)
@@ -75,16 +73,42 @@
 (define t/fst (λc* (x y) x))
 (define t/snd (λc* (x y) y))
 
+
+;; Encoding tests
+
 (require "uplc.rkt")
 
 (let
     [(program
       (letc*
        [(id (λc* (i) i))
-        (fst (λc* (x y) x))]
+        (_fst (λc* (x _y) x))]
        id))]
   (uplc:encoding-test
    (uplc:program
     (uplc:version 1 0 0)
     (rt->uplc 0 (program 0)))
    '(76 1 0 0 50 50 0 34 32 2 32 1 1)))
+
+(let
+    [(program
+      (letc*
+       [(id (λc* (i) i))]
+       (λc* (x _y) x)))]
+  (uplc:encoding-test
+   (uplc:program
+    (uplc:version 1 0 0)
+    (rt->uplc 0 (program 0)))
+   '(73 1 0 0 50 34 0 34 0 17)))
+
+(let
+    [(program
+      (letc*
+       [(id (λc* (i) i))
+        (fst (λc* (x _y) x))]
+       (λc* (_x y) y)))]
+  (uplc:encoding-test
+   (uplc:program
+    (uplc:version 1 0 0)
+    (rt->uplc 0 (program 0)))
+   '(77 1 0 0 50 50 34 0 18 32 2 32 1 1)))
