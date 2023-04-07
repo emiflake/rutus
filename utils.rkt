@@ -10,16 +10,18 @@
 (require cbor)
 (require racket/port)
 
-(define (cbor->hex a)
+(define/contract (cbor->hex a)
+  (-> any/c string?)
   (bytes->hex-string
-   (call-with-bytevector-output-port
+   (call-with-output-bytes
     (λ(out)
       (cbor-write
        (with-sorted-map-keys cbor-empty-config #t)
        a
        out)))))
 
-(define (hex->cbor hex)
+(define/contract (hex->cbor hex)
+  (-> string? any/c)
   (call-with-input-bytes
    (hex-string->bytes hex)
    (λ(in)
