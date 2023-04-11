@@ -4,12 +4,14 @@
 (require racket/contract)
 (require cbor)
 (require rnrs/io/ports-6)
+(require "bitport.rkt")
 
 (provide
  low7
  natural/e
  integral/e
  flat-pad
+ flat-pad/e
  print-bits
  cbor-bytes)
 
@@ -25,21 +27,27 @@
       [(eq? t1 0) (list l)]
       [else (cons (w7 l) (w7-list t1))])))
 
-(define/contract (natural/e n)
-  (-> exact-nonnegative-integer? bit-string?)
-  (integral/e n))
+(define/contract (natural/e n out)
+  (-> exact-nonnegative-integer? output-bitport? void?)
+  (integral/e n out))
 
-(define/contract (integral/e n)
-  (-> exact-integer? bit-string?)
+(define/contract (integral/e n out)
+  (-> exact-integer? output-bitport? void?)
   (let [(vs (w7-list n))]
-    (integral-ws/e vs)))
+    (integral-ws/e vs out)))
 
-(define/contract (integral-ws/e xs)
-  (-> (listof exact-integer?) bit-string?)
+(define/contract (integral-ws/e xs out)
+  (-> (listof exact-integer?) output-bitport? void?)
   (for/fold
    ([bs (bit-string)])
    ([x (in-list xs)])
-    (bit-string [x :: bytes 1] [bs  :: binary])))
+    (bitport-write (bit-string [x :: bytes 1] [bs :: binary]) out)))
+
+;; Pad remaining bits a la flat
+(define/contract (flat-pad/e out)
+  (-> output-bitport? void?)
+  (define padding-required (- 8 (bitport-remainder-bitcount out)))
+  (bitport-write (bit-string (1 :: bits padding-required little-endian)) out))
 
 (define/contract (flat-pad bs)
   (-> bit-string? bit-string?)
@@ -58,7 +66,6 @@
        cbor-empty-config
        a
        out))))
-
 
 (define (print-bits bs)
   (cond
