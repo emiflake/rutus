@@ -91,7 +91,9 @@
   (-> bytes? output-bitport? void?)
   (bytestring-filler/e out)
   (constant-bytestring-blocks/e bs out)
-  (bitport-write (bit-string [0 :: bits 8]) out))
+  ;; If we are already writing an empty bytestring, then there's no need to suffix another empty block
+  (unless (= 0 (bytes-length bs))
+    (bitport-write (bit-string [0 :: bits 8]) out)))
 
 (define constant-width 4)
 
@@ -204,3 +206,6 @@
                            (plutus:constant-bytestring
                             (list->bytes (build-list 300 (λ (x) 65)))))))
                '(89 1 53 1 0 0 36 137 255 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 45 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 0 1))
+
+(encoding-test (uplc:program (uplc:version 1 0 0) (uplc:abs 1 (uplc:constant (plutus:constant-bytestring #""))))
+               '(71 1 0 0 36 137 0 1))
