@@ -67,23 +67,51 @@
         [len (quotient (bit-string-length bs) 8)])
   (cond
     [(> len block-size)
-     (constant-bytestring-blocks/e (bit-string-take bs (* 8 block-size)) out)
-     (constant-bytestring-blocks/e (bit-string-drop bs (* 8 block-size)) out)]
+     (define-values (h t) (bit-string-split-at bs (* 8 block-size)))
+     (constant-bytestring-blocks/e h out)
+     (constant-bytestring-blocks/e t out)]
     [else
      (bitport-write
       (bit-string
         [len :: bits 8]
         [bs :: binary]) out)])))
 
+(define/contract (bytestring-filler/e out)
+  (-> output-bitport? void?)
+  (define missing (- 8 (bitport-remainder-bitcount out)))
+  (cond
+    ;; We take a full byte if it's already aligned
+    [(= missing 0)
+     (bitport-write (bit-string [1 :: bits 8]) out)]
+    [(> missing 0)
+     (bitport-write
+      (bit-string [1 :: bits missing]) out)]))
+
 (define/contract (constant-bytestring/e bs out)
   (-> bytes? output-bitport? void?)
+  (bytestring-filler/e out)
   (constant-bytestring-blocks/e bs out)
   (bitport-write (bit-string [0 :: bits 8]) out))
+
+(define constant-width 4)
+
+(define (constant-tag/e t out)
+  (bitport-write (bit-string [t :: bits constant-width little-endian]) out))
+
+(define (encode-list-with/e f l out)
+  (match l
+    ['()
+      (bitport-write (bit-string [0 :: bits 1]) out)]
+    [(list-rest x xs)
+      (bitport-write (bit-string [1 :: bits 1]) out)
+      (f x out)
+      (encode-list-with/e f xs out)]))
 
 (define/contract (constant/e constant out)
   (-> plutus:constant? output-bitport? void?)
   (match constant
     [(plutus:constant-bytestring bs)
+     (encode-list-with/e constant-tag/e '(1) out)
      (constant-bytestring/e bs out)]
     [_ (error "Unimplemented constant/e for" constant)]))
 
@@ -149,7 +177,6 @@
 
 (require rackunit)
 
-
 (define (encoding-test t expected-bytes)
   (check-equal?
      (bytes->list (uplc:encode t))
@@ -168,4 +195,12 @@
                '(70 1 0 0 34 0 17))
 
 (encoding-test (uplc:program (uplc:version 1 0 0) (uplc:abs 1 (uplc:constant (plutus:constant-bytestring #"hello"))))
-               '(77 1 0 0 72 129 5 104 101 108 108 111 0 1))
+               '(77 1 0 0 36 137 5 104 101 108 108 111 0 1))
+
+(encoding-test (uplc:program
+                (uplc:version 1 0 0)
+                (uplc:abs 1
+                          (uplc:constant
+                           (plutus:constant-bytestring
+                            (list->bytes (build-list 300 (λ (x) 65)))))))
+               '(89 1 53 1 0 0 36 137 255 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 45 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 65 0 1))
