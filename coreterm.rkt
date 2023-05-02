@@ -1,17 +1,16 @@
 #lang racket
-
-;;
-;; This module exposes the simple to use plutus core without any optimizations.
-;; It should be the compile target for another language.
-;;
-;; In particular, the following special things are to note:
-;; - applications and lambdas are uncurried
-;; - terms are represented as taking a level, which must be resolved later
-;; - macros:
-;;    - λc* for introducing lambdas
-;;    - letc* for introducing let bindings
-;;    - appc for application
-;;
+;
+; This module exposes the simple to use plutus core without any optimizations.
+; It should be the compile target for another language.
+;
+; In particular, the following special things are to note:
+; - applications and lambdas are uncurried
+; - terms are represented as taking a level, which must be resolved later
+; - macros:
+;    - λc* for introducing lambdas
+;    - letc* for introducing let bindings
+;    - appc for application
+;
 (require "rawterm.rkt")
 
 (define (intro-abs f)
@@ -65,6 +64,9 @@
       ([ar (in-list (reverse (syntax->list #'(ARG ...))))])
        #`(λc (#,ar) #,body))]))
 
+(define (intro-integer n)
+  (λ (i) (rt:constant (plutus:constant-integer n))))
+
 (define-syntax (appc stx)
   (syntax-case stx ()
     [(_ F X)
@@ -112,3 +114,13 @@
     (uplc:version 1 0 0)
     (rt->uplc 0 (program 0)))
    '(77 1 0 0 50 50 34 0 18 32 2 32 1 1)))
+
+(let*
+    [(snd (λc* (x y) y))
+     (program
+       (λc* (_) (appc snd (intro-integer -100000))))]
+  (uplc:encoding-test
+   (uplc:program
+    (uplc:version 1 0 0)
+    (rt->uplc 0 (program 0)))
+   '(75 1 0 0 35 34 0 20 130 254 104 49)))

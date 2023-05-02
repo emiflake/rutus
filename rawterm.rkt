@@ -5,14 +5,16 @@
 (require racket/pretty)
 
 (provide
- rt:abs
- rt:var
- rt:app
- rt:delay
- rt:force
- rt:builtin
+ (struct-out rt:abs)
+ (struct-out rt:var)
+ (struct-out rt:app)
+ (struct-out rt:delay)
+ (struct-out rt:force)
+ (struct-out rt:builtin)
+ (struct-out rt:constant)
+ (struct-out rt:error)
+
  rt:eval
- rt:error
  rt->uplc)
 
 (define-syntax introduce-constructors
@@ -32,6 +34,7 @@
 (struct/contract rt:delay rt:term ([arg rt:term?]) #:transparent)
 (struct/contract rt:force rt:term ([arg rt:term?]) #:transparent)
 (struct/contract rt:builtin rt:term ([builtin any/c]) #:transparent)
+(struct/contract rt:constant rt:term ([constant plutus:constant?]) #:transparent)
 (struct/contract rt:error rt:term () #:transparent)
 
 (struct/contract rt:version
@@ -94,6 +97,7 @@
       ([b (rt->uplc level f)])
       ([x (in-list xs)])
        (uplc:app b (rt->uplc level x)))]
+    [(rt:constant c) (uplc:constant c)]
     [(rt:error)
      (uplc:error)]))
 

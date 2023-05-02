@@ -11,6 +11,13 @@
  (struct-out uplc:var)
  (struct-out uplc:app)
  (struct-out uplc:error)
+ (struct-out uplc:constant)
+ (struct-out uplc:builtin)
+
+ ; move these to separate file maybe?
+ (struct-out plutus:constant)
+ (struct-out plutus:constant-integer)
+ (struct-out plutus:constant-bytestring)
 
  (struct-out uplc:version)
  (struct-out uplc:program)
@@ -95,6 +102,10 @@
   (unless (= 0 (bytes-length bs))
     (bitport-write (bit-string [0 :: bits 8]) out)))
 
+(define/contract (constant-integer/e i out)
+  (-> exact-integer? output-bitport? void?)
+  (integer/e i out))
+
 (define constant-width 4)
 
 (define (constant-tag/e t out)
@@ -115,6 +126,9 @@
     [(plutus:constant-bytestring bs)
      (encode-list-with/e constant-tag/e '(1) out)
      (constant-bytestring/e bs out)]
+    [(plutus:constant-integer i)
+     (encode-list-with/e constant-tag/e '(0) out)
+     (constant-integer/e i out)]
     [_ (error "Unimplemented constant/e for" constant)]))
 
 ;; how wide are term tags
@@ -209,3 +223,34 @@
 
 (encoding-test (uplc:program (uplc:version 1 0 0) (uplc:abs 1 (uplc:constant (plutus:constant-bytestring #""))))
                '(71 1 0 0 36 137 0 1))
+
+(encoding-test (uplc:program (uplc:version 1 0 0)
+                             (uplc:abs 1 (uplc:constant
+                                          (plutus:constant-integer 0))))
+               '(70 1 0 0 36 128 1))
+
+(encoding-test (uplc:program (uplc:version 1 0 0)
+                             (uplc:abs 1 (uplc:constant
+                                          (plutus:constant-integer 55))))
+               '(70 1 0 0 36 129 185))
+
+(encoding-test (uplc:program (uplc:version 1 0 0)
+                             (uplc:abs 1 (uplc:constant
+                                          (plutus:constant-integer -55))))
+               '(70 1 0 0 36 129 181))
+
+(encoding-test (uplc:program (uplc:version 1 0 0)
+                             (uplc:abs 1 (uplc:constant
+                                          (plutus:constant-integer 100000))))
+               '(72 1 0 0 36 131 2 104 49))
+
+(encoding-test (uplc:program (uplc:version 1 0 0)
+                             (uplc:abs 1 (uplc:constant
+                                          (plutus:constant-integer -100000))))
+               '(72 1 0 0 36 130 254 104 49))
+
+(encoding-test (uplc:program (uplc:version 1 0 0)
+                             (uplc:abs 1 (uplc:app (uplc:abs 1 (uplc:abs 1 (uplc:var 2)))
+                                                   (uplc:constant
+                                                    (plutus:constant-integer -100000)))))
+               '(75 1 0 0 35 34 0 36 130 254 104 49))

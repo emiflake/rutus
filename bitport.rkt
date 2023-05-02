@@ -1,4 +1,12 @@
 #lang racket/base
+; A very simple port-like interface for emitting bit strings into
+; a port. It keeps track of a 0-7 bits until they form a full byte
+; once they do, they are emitted.
+;
+; The main purpose of this is for emitting streams of bits without
+; being inefficient in keeping them around. We additionally get the
+; benefit of knowing the current alignment status, using
+; `bitport-remainder-bitcount`.
 
 (require racket/contract)
 (require bitsyntax)

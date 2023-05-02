@@ -10,10 +10,19 @@
  low7
  natural/e
  integral/e
+ integer/e
  flat-pad
  flat-pad/e
  print-bits
  cbor-bytes)
+
+; zigzag encoding is used for converting integers into naturals in a specific way.
+; interlacing negatives with positives. 0, -1, 1, -2, 2, and so on.
+(define/contract (zigzag n)
+  (-> exact-integer? exact-nonnegative-integer?)
+  (bitwise-xor
+    (arithmetic-shift n 1)
+    (arithmetic-shift n (- (integer-length n)))))
 
 (define/contract (low7 n)
   (-> exact-integer? exact-integer?)
@@ -31,6 +40,10 @@
   (-> exact-nonnegative-integer? output-bitport? void?)
   (integral/e n out))
 
+(define/contract (integer/e n out)
+  (-> exact-integer? output-bitport? void?)
+  (integral/e (zigzag n) out))
+
 (define/contract (integral/e n out)
   (-> exact-integer? output-bitport? void?)
   (let [(vs (w7-list n))]
@@ -38,10 +51,8 @@
 
 (define/contract (integral-ws/e xs out)
   (-> (listof exact-integer?) output-bitport? void?)
-  (for/fold
-   ([bs (bit-string)])
-   ([x (in-list xs)])
-    (bitport-write (bit-string [x :: bytes 1] [bs :: binary]) out)))
+  (for ([x (in-list xs)])
+        (bitport-write (bit-string [x :: bytes 1]) out)))
 
 ;; Pad remaining bits a la flat
 (define/contract (flat-pad/e out)
