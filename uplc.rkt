@@ -11,6 +11,8 @@
  (struct-out uplc:var)
  (struct-out uplc:app)
  (struct-out uplc:error)
+ (struct-out uplc:force)
+ (struct-out uplc:delay)
  (struct-out uplc:constant)
  (struct-out uplc:builtin)
 
@@ -30,6 +32,7 @@
 (require bitsyntax)
 (require "enc.rkt")
 (require "bitport.rkt")
+(require "builtin.rkt")
 
 ;; Constant types
 (struct/contract plutus:constant () #:transparent)
@@ -45,7 +48,7 @@
                                      [arg uplc:term?]) #:transparent)
 (struct/contract uplc:delay uplc:term ([arg uplc:term?]) #:transparent)
 (struct/contract uplc:force uplc:term ([arg uplc:term?]) #:transparent)
-(struct/contract uplc:builtin uplc:term ([builtin any/c]) #:transparent)
+(struct/contract uplc:builtin uplc:term ([builtin plutus:builtin?]) #:transparent)
 (struct/contract uplc:constant uplc:term ([value plutus:constant?]) #:transparent)
 (struct/contract uplc:error uplc:term () #:transparent)
 
@@ -163,9 +166,15 @@
     [(uplc:constant con)
      (term-tag/e 4 out)
      (constant/e con out)]
+    [(uplc:force t)
+     (term-tag/e 5 out)
+     (term/e t out)]
     [(uplc:error)
      (bit-string
-      [(term-tag/e 6) :: binary])]))
+      [(term-tag/e 6) :: binary])]
+    [(uplc:builtin b)
+     (term-tag/e 7 out)
+     (plutus:builtin-tag/e b out)]))
 
 (define/contract (version/e version out)
   (-> uplc:version? output-bitport? void?)
@@ -254,3 +263,14 @@
                                                    (uplc:constant
                                                     (plutus:constant-integer -100000)))))
                '(75 1 0 0 35 34 0 36 130 254 104 49))
+
+(encoding-test (uplc:program (uplc:version 1 0 0)
+                             (uplc:force (uplc:force (uplc:builtin 'FstPair))))
+               '(70 1 0 0 85 115 161))
+
+(encoding-test (uplc:program (uplc:version 1 0 0)
+                             (uplc:app
+                              (uplc:app (uplc:builtin 'AddInteger)
+                                        (uplc:constant (plutus:constant-integer 1)))
+                              (uplc:constant (plutus:constant-integer 1))))
+               '(74 1 0 0 51 112 9 0 18 64 5))

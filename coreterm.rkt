@@ -67,6 +67,9 @@
 (define (intro-integer n)
   (λ (i) (rt:constant (plutus:constant-integer n))))
 
+(define (intro-builtin builtin)
+  (λ (i) (rt:builtin builtin)))
+
 (define-syntax (appc stx)
   (syntax-case stx ()
     [(_ F X)
@@ -77,7 +80,6 @@
 
 
 ;; Encoding tests
-
 (require "uplc.rkt")
 
 (let
@@ -124,3 +126,39 @@
     (uplc:version 1 0 0)
     (rt->uplc 0 (program 0)))
    '(75 1 0 0 35 34 0 20 130 254 104 49)))
+
+(let*
+    [(program
+       (λc* (_ _ _ _ _ _ _ _ _ _) (intro-integer -100000)))]
+  (uplc:encoding-test
+   (uplc:program
+    (uplc:version 1 0 0)
+    (rt->uplc 0 (program 0)))
+   '(77 1 0 0 34 34 34 34 34 72 47 230 131 1)))
+
+(let*
+    [(program
+      (appc
+       (appc (intro-builtin 'AddInteger)
+             (intro-integer 1))
+       (intro-integer 1)))]
+  (uplc:encoding-test
+   (uplc:program
+    (uplc:version 1 0 0)
+    (rt->uplc 0 (program 0)))
+   '(74 1 0 0 51 112 9 0 18 64 5)))
+
+
+(let*
+    [(binop (λ (f) (λ (x y) (appc (appc (intro-builtin f) x) y))))
+     (add/c (binop 'AddInteger))
+     (multiply/c (binop 'MultiplyInteger))
+     (program
+      (letc
+         [(square/c (λc* (x) (multiply/c x x)))]
+         (λc* (x y) (add/c (appc square/c x) (appc square/c y)))))]
+  (uplc:encoding-test
+   (uplc:program
+    (uplc:version 1 0 0)
+    (rt->uplc 0 (program 0)))
+  '(85 1 0 0 50 34 51 112 6 0 96 2 96 6 0 68 102 224 128 4 0 65)))

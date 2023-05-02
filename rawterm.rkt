@@ -17,6 +17,8 @@
  rt:eval
  rt->uplc)
 
+(require "builtin.rkt")
+
 (define-syntax introduce-constructors
   (syntax-rules ()
     [(introduce-constructors
@@ -33,7 +35,7 @@
                                  [arg (listof rt:term?)]) #:transparent)
 (struct/contract rt:delay rt:term ([arg rt:term?]) #:transparent)
 (struct/contract rt:force rt:term ([arg rt:term?]) #:transparent)
-(struct/contract rt:builtin rt:term ([builtin any/c]) #:transparent)
+(struct/contract rt:builtin rt:term ([builtin plutus:builtin?]) #:transparent)
 (struct/contract rt:constant rt:term ([constant plutus:constant?]) #:transparent)
 (struct/contract rt:error rt:term () #:transparent)
 
@@ -98,6 +100,12 @@
       ([x (in-list xs)])
        (uplc:app b (rt->uplc level x)))]
     [(rt:constant c) (uplc:constant c)]
+    [(rt:force t)
+     (uplc:force (rt->uplc level t))]
+    [(rt:delay t)
+     (uplc:delay (rt->uplc level t))]
+    [(rt:builtin b)
+     (uplc:builtin b)]
     [(rt:error)
      (uplc:error)]))
 
