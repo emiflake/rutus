@@ -30,9 +30,9 @@
 
 
 (require bitsyntax)
-(require "enc.rkt")
-(require "bitport.rkt")
-(require "builtin.rkt")
+(require parkt/lib/enc)
+(require parkt/lib/bitport)
+(require parkt/lib/builtin)
 
 ;; Constant types
 (struct/contract plutus:constant () #:transparent)

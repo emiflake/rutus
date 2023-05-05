@@ -4,7 +4,7 @@
 (require racket/contract)
 (require cbor)
 (require rnrs/io/ports-6)
-(require "bitport.rkt")
+(require parkt/lib/bitport)
 
 (provide
  low7

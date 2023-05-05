@@ -5,6 +5,7 @@
 (require racket/pretty)
 
 (provide
+ (struct-out rt:term)
  (struct-out rt:abs)
  (struct-out rt:var)
  (struct-out rt:app)

@@ -3,7 +3,7 @@
 (require racket/contract)
 (require racket/match)
 
-(require "./utils.rkt")
+(require parkt/lib/utils)
 
 (require cbor)
 
@@ -53,8 +53,10 @@
     [(plutus:bytestring bs)
      bs]
     [(plutus:map ps)
-     (hash-map/copy ps
-                    (λ (k v) (values (plutus:encode-cbor~ k) (plutus:encode-cbor~ v))))]
+     (hash-map/copy
+      ps
+      (lambda (k v) (values (plutus:encode-cbor~ k)
+                            (plutus:encode-cbor~ v))))]
     [_ (error "Could not encode cbor" data)]))
 
 ;; closed set -- not all types should be handled, users should define their own.
