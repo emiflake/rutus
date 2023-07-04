@@ -30,8 +30,14 @@
           };
         in
         {
+
           devShells.default = pkgs.mkShell {
-            buildInputs = [ pkgs.racket ];
+            buildInputs = [
+              pkgs.racket
+              (pkgs.haskell.compiler.ghc945.overrideDerivation (oldAttrs: {
+                name = "ghc-9.4";
+              }))
+            ];
           };
         };
 

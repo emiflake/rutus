@@ -22,6 +22,8 @@
          intro-delay
          coreterm-eval
          appc
+         letc*
+         appc*
          (struct-out coreterm))
 
 (require racket/contract)
@@ -42,6 +44,12 @@
             (t (coreterm-eval (f v) (+ i 1)))]
          (match t
            [(rt:app b [rt:var 0]) b]
+           [(rt:abs n (rt:app t~ args))
+            #:when
+            (and (displayln (map (match-lambda [(rt:var v) v] [_ #f]) args))
+                 (eq? (map (match-lambda [(rt:var v) v] [_ #f]) args)
+                      (range 0 (+ n 1))))
+            t~]
            [(rt:abs n b) (rt:abs (+ n 1) b)]
            [t (rt:abs 0 t)])))))
 
@@ -115,6 +123,14 @@
     [(_ F X)
      #`(intro-app F X)]))
 
+(define-syntax (appc* stx)
+  (syntax-case stx ()
+    [(_ F ARG ...)
+     (for/fold
+       ([r #'F])
+       ([ar (in-list (syntax->list #'(ARG ...)))])
+       #`(appc #,r #,ar))]))
+
 (define t/fst (λc* (x y) x))
 (define t/snd (λc* (x y) y))
 
@@ -125,8 +141,7 @@
 ;     [(program
 ;         (letc* [(id (λc* (x) x))]
 ;                (λc* (x y) x)))]
-;   ((coreterm-fun program) 0)
-;   #;(uplc:encoding-test
+;   (uplc:encoding-test
 ;    (uplc:program
 ;     (uplc:version 1 0 0)
 ;     (rt->uplc 0 ((coreterm-fun program) 0)))
