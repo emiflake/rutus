@@ -11,7 +11,7 @@ If you missed macros in other languages that compile to Plutus, this is for you.
 ### Quickstart
 
 ```
-racko pkg install
+raco pkg install
 # #lang parkt/core is available in scope
 ```
 
