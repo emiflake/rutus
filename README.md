@@ -8,6 +8,14 @@ approach.
 
 If you missed macros in other languages that compile to Plutus, this is for you.
 
+### Quickstart
+
+```
+cd parkt
+racko pkg install parkt
+# #lang parkt is available in scope
+```
+
 ### What is currently implemented
 
 MVP:
