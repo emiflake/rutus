@@ -1,5 +1,5 @@
 #lang info
-(define collection "parkt")
+(define collection 'multi)
 (define deps '("base" "cbor" "bitsyntax"))
 (define build-deps '("scribble-lib" "racket-doc" "rackunit-lib"))
 (define scribblings '(("scribblings/parkt.scrbl" ())))

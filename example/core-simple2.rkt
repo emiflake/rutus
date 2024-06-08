@@ -1,4 +1,4 @@
-#lang parkt
+#lang parkt/core
 
 (define-core + (@ intro-builtin 'AddInteger))
 (define-core * (@ intro-builtin 'MultiplyInteger))
