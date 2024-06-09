@@ -1,8 +1,8 @@
 #lang racket/base
 
-(require parkt/lib/coreterm)
-(require parkt/lib/uplc)
-(require parkt/lib/rawterm)
+(require rutus/lib/coreterm)
+(require rutus/lib/uplc)
+(require rutus/lib/rawterm)
  
 (require racket/function
          (for-syntax syntax/parse
@@ -20,7 +20,7 @@
   (syntax-parse stx
     [(_ E ...)
      #'(#%module-begin
-        (displayln "; parkt/core - 0.1.0")
+        (displayln "; rutus/core - 0.1.0")
         E ...)]))
 
 (define-syntax (core-top-interaction stx)

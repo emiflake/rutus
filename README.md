@@ -1,4 +1,4 @@
-# parkt
+# rutus
 
 Barebones Cardano Plutus utilities in Racket.
 
@@ -12,7 +12,7 @@ If you missed macros in other languages that compile to Plutus, this is for you.
 
 ```
 raco pkg install
-# #lang parkt/core is available in scope
+# #lang rutus/core is available in scope
 ```
 
 ### What is currently implemented
@@ -22,12 +22,12 @@ MVP:
 - [x] Barebones Plutus Data encoding in CBOR
 - [ ] Builtin encoding
 - [ ] UPLC Term flat encoding
-- [ ] Thin macro sugar layer overtop of raw term writing; "base parkt"
+- [ ] Thin macro sugar layer overtop of raw term writing; "base rutus"
 
 Future:
 
 - [ ] Hoisting optimizations
-- [ ] Type directed programming language overtop of base parkt; "struct parkt"
+- [ ] Type directed programming language overtop of base rutus; "struct rutus"
 - [ ] Plutus Data decoding in CBOR
 - [ ] Decoding scripts
 - [ ] Evaluating scripts

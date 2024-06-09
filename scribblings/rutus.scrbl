@@ -1,10 +1,10 @@
 #lang scribble/manual
-@require[@for-label[parkt
+@require[@for-label[rutus
                     racket/base]]
 
-@title{parkt}
+@title{rutus}
 @author{przembot}
 
-@defmodule[parkt]
+@defmodule[rutus]
 
 Package Description Here
