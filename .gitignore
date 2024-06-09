@@ -5,3 +5,5 @@
 compiled/
 /doc/
 rutus/doc/
+.direnv
+.envrc
