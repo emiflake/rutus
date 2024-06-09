@@ -4,4 +4,6 @@
 .DS_Store
 compiled/
 /doc/
-parkt/doc/
+rutus/doc/
+.direnv
+.envrc
