@@ -1,33 +1,42 @@
 #lang rutus/core
 
-(define-core + (@ intro-builtin 'AddInteger))
-(define-core * (@ intro-builtin 'MultiplyInteger))
-(define-core - (@ intro-builtin 'SubtractInteger))
-
-(define-core (if condition t f)
+(define (if condition t f)
   (@ intro-force (core ((@ intro-builtin 'IfThenElse) condition (@ intro-delay t) (@ intro-delay f)))))
 
-(define-core < (@ intro-builtin 'LessThanInteger))
+(define < (@ intro-builtin 'LessThanInteger))
 
-(define-core (square x) (* x x))
+(define + (@ intro-builtin 'AddInteger))
+(define - (@ intro-builtin 'SubtractInteger))
+(define * (@ intro-builtin 'MultiplyInteger))
 
-(define-core (fix f) ((lambda (x) (f (lambda (v) ((x x) v)))) (lambda (x) (f (lambda (v) ((x x) v))))))
+(define (square x) (* x x))
 
-(define-core (iterate-n n f x)
+(define (fix f) ((lambda (x) (f (lambda (v) ((x x) v))))
+                      (lambda (x) (f (lambda (v) ((x x) v))))))
+
+(define (iterate-n n f x)
   ((fix (lambda (self n f x)
            (if (< n 1)
                x
                (self (- n 1) f (f x)))))
    n f x))
 
-(define-core iterate-n2
+(define iterate-n2
   (fix (lambda (self n f x)
-               (if (< n 1)
+               (if (< 1 n)
                    x
                    (self (- n 1) f (f x))))))
 
+(define foo "hi")
+
+(define bytestring-length (@ intro-builtin 'LengthOfByteString))
+
 (define-script
-   example
+  string-example
+  (bytestring-length foo))
+
+(define-script
+  example
   (iterate-n 5 square 2))
 
 (define-script
