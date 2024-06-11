@@ -4,15 +4,13 @@
 (require rutus/lib/uplc)
 (require rutus/lib/rawterm)
  
-(require racket/function
-         (for-syntax syntax/parse
+(require (for-syntax syntax/parse
                      syntax/define
                      racket/base))
 
+(require racket/pretty)
+
 (require syntax/parse)
-
-
-(require racket/match)
 
 (require (prefix-in lifted: racket))
 
@@ -23,15 +21,15 @@
         (displayln "; rutus/core - 0.1.0")
         E ...)]))
 
+;; This is what makes repl interactions work.
 (define-syntax (core-top-interaction stx)
   (syntax-parse stx
-    [(_ E ...)
-     #'(#%top-interaction
-        (E ...))]))
+    [(_ . E)
+     #'(#%top-interaction . (coreterm-eval (stx->coreterm E) 0))]))
 
 (define-syntax (core-top stx)
   (syntax-parse stx
-    [(_ . E )
+    [(_ . E)
      #'(#%top . E)]))
 
 (define-syntax (core-app stx)
@@ -52,7 +50,9 @@
          (displayln "; After macro:  ")
          (println (expand #'(stx->coreterm BODY)))
          (define NAME (uplc:program (uplc:version 1 0 0) (rt->uplc 0 (coreterm-eval (stx->coreterm BODY) 0))))
-         (bytes->list (uplc:encode NAME)))]))
+         (pretty-print NAME)
+         (bytes->list (uplc:encode NAME))
+         )]))
 
 (define-syntax (core stx)
   (syntax-parse stx
@@ -67,9 +67,9 @@
      #'(begin
          (define NAME (stx->coreterm BODY)))]))
 
-(define-syntax (define-core-inline stx)
+(define-syntax (define-inline stx)
   (syntax-parse stx
-    [(n (NAME BINDING ...) BODY)
+    [(_ (NAME BINDING ...) BODY)
      #'(begin
          (define (NAME BINDING ...) (core BODY)))]
     [(_ NAME BODY)
@@ -81,12 +81,20 @@
 (define-syntax (stx->coreterm stx)
   (syntax-parse stx
     #:literals [lambda #%app let]
-    [(_ (lambda (ARG ...) BODY)) #'(core-lambda (ARG ...) (stx->coreterm BODY))]
-    [(_ ((~literal @) X ...)) #'(X ...)]
-    [(_ (~var X integer)) #'(intro-integer X)]
-    [(_ (let [(K V) ...] BODY)) #'(letc* [(K (stx->coreterm V)) ...] (stx->coreterm BODY))]
-    [(_ (F X ...)) #'(appc* (stx->coreterm F) (stx->coreterm X) ...)]
-    [(_ A) #'A]))
+    [(_ (lambda (ARG ...) BODY))
+     #'(core-lambda (ARG ...) (stx->coreterm BODY))]
+    [(_ ((~literal @) X ...))
+     #'(X ...)]
+    [(_ (~var X integer))
+     #'(intro-integer X)]
+    [(_ (~var X string))
+     #'(intro-bytestring X)]
+    [(_ (let [(K V) ...] BODY))
+     #'(letc* [(K (stx->coreterm V)) ...] (stx->coreterm BODY))]
+    [(_ (F X ...))
+     #'(appc* (stx->coreterm F) (stx->coreterm X) ...)]
+    [(_ A)
+     #'A]))
 
 (define-syntax (core-lambda~ stx)
   (syntax-parse stx
@@ -103,6 +111,8 @@
 
 (define-syntax (core-datum stx)
   (syntax-parse stx
+    [(_ . (~var D string))
+     #'(#%datum . D)]
     [(_ . (~var D integer))
      #'(#%datum . D)]))
 ; 
@@ -158,8 +168,8 @@
                      [core-datum #%datum])
 
          define-script
-         define-core
-         define-core-inline
+         (rename-out [define-core define])
+         define-inline
          core
          @
          lambda
@@ -167,10 +177,7 @@
          intro-force
          intro-delay
          let
-         quote
-         
-         ;; Reexports
-         (rename-out [lifted:define define]))
+         quote)
 
 ;; (provide (rename-out [core-module #%module-begin]
 ;;                      [core-top-interaction #%top-interaction]

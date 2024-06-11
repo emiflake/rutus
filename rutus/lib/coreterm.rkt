@@ -17,6 +17,7 @@
          intro-app
          intro-let
          intro-integer
+         intro-bytestring
          intro-builtin
          intro-force
          intro-delay
@@ -46,7 +47,7 @@
            [(rt:app b [rt:var 0]) b]
            [(rt:abs n (rt:app t~ args))
             #:when
-            (and (displayln (map (match-lambda [(rt:var v) v] [_ #f]) args))
+            (and #;(displayln (map (match-lambda [(rt:var v) v] [_ #f]) args))
                  (eq? (map (match-lambda [(rt:var v) v] [_ #f]) args)
                       (range 0 (+ n 1))))
             t~]
@@ -112,7 +113,11 @@
 
 (define/contract (intro-integer n)
   (-> exact-integer? coreterm?)
-  (coreterm (λ (i) (rt:constant (plutus:constant-integer n)))))
+  (coreterm (λ (_) (rt:constant (plutus:constant-integer n)))))
+
+(define/contract (intro-bytestring s)
+  (-> string? coreterm?)
+  (coreterm (λ (_) (rt:constant (plutus:constant-bytestring (string->bytes/locale s))))))
 
 (define (intro-builtin builtin)
   (-> exact-integer? coreterm?)
